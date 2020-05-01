@@ -493,7 +493,7 @@ func (g *Generator) Generate() error {
 
 	g.printf(`
 func New%s(opts ...func(*%s)) *%s {
-	m := new(*%s)
+	m := new(%s)
 	for _,opt := range opts {
 		opt(m)
 	}
