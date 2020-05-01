@@ -491,6 +491,17 @@ func (g *Generator) Generate() error {
 		"type %s struct {\n\tmock.Mock\n}\n\n", g.mockName(),
 	)
 
+	g.printf(`
+func New%s(opts ...func(*%s)) *%s {
+	m := new(*%s)
+	for _,opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+`,g.mockName(),g.mockName(),g.mockName(),g.mockName())
+
 	for i := 0; i < g.iface.Type.NumMethods(); i++ {
 		fn := g.iface.Type.Method(i)
 
@@ -508,6 +519,7 @@ func (g *Generator) Generate() error {
 				strings.Join(params.Names, ", "),
 			)
 		}
+
 		g.printf(
 			"func (_m *%s) %s(%s) ", g.mockName(), fname,
 			strings.Join(params.Params, ", "),
@@ -571,8 +583,22 @@ func (g *Generator) Generate() error {
 		}
 
 		g.printf("}\n")
-	}
 
+		g.printf(`
+type %s_%sCall []interface{}
+func (c %s_%sCall) Returning(rets ...interface{}) func(*%s) {
+		return func(m *%s) {
+			m.On("%s",([]interface{})(c)...).Return(rets...)
+		}
+}
+
+func With%s_%s(args ...interface{}) %s_%sCall {
+	return %s_%sCall(args)
+}
+
+`,g.mockName(),fname,g.mockName(),fname,g.mockName(),g.mockName(),fname,
+			g.mockName(),fname,g.mockName(),fname,g.mockName(),fname)
+	}
 	return nil
 }
 
